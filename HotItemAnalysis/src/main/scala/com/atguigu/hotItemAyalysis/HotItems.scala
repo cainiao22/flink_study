@@ -2,8 +2,10 @@ package com.atguigu.hotItemAyalysis
 
 
 import java.sql.Timestamp
+import java.util.Properties
 
 import org.apache.flink.api.common.functions.AggregateFunction
+import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.api.common.state.{ListState, ListStateDescriptor}
 import org.apache.flink.api.java.tuple.{Tuple, Tuple1}
 import org.apache.flink.configuration.Configuration
@@ -13,7 +15,9 @@ import org.apache.flink.streaming.api.scala.function.WindowFunction
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.apache.flink.util.Collector
+import org.apache.kafka.common.serialization.StringDeserializer
 
 import scala.collection.mutable.ListBuffer
 
@@ -32,8 +36,17 @@ object HotItems {
     env.setParallelism(1)
     //定义事件事件语义
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
+
+    //kafka
+    val properties = new Properties()
+    properties.setProperty("bootstrap.server", "127.0.0.1:9092")
+    properties.setProperty("group.id", "consumer-hotitems")
+    properties.setProperty("key.deserializer", classOf[StringDeserializer].getName)
+    properties.setProperty("value.deserializer", classOf[StringDeserializer].getName)
+
     //读取数据
-    val source = env.readTextFile("/UserBehavior.csv")
+    val source = env.addSource(new FlinkKafkaConsumer[String]("topic-items", new SimpleStringSchema(), properties))
+    //val source = env.readTextFile("/UserBehavior.csv")
 
     val dataStream: DataStream[UserBehavior] = source.map(data => {
       val arr = data.split(",")
