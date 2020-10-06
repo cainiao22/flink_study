@@ -130,7 +130,7 @@ class TopNHotItems(n: Int) extends KeyedProcessFunction[Tuple, ItemViewCount, St
       .append(new Timestamp(timestamp - 1))
       .append("\n")
     for (i <- sortedItemViewCounts.indices) {
-      result.append(s"""NO. ${i}: 商品标号:${sortedItemViewCounts(i).itemId}, 热门度:${sortedItemViewCounts(i).count}""")
+      result.append(s"""NO. $i: 商品标号:${sortedItemViewCounts(i).itemId}, 热门度:${sortedItemViewCounts(i).count}""")
         .append("\n")
     }
     result.append("=========================================")
