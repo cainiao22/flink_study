@@ -57,6 +57,8 @@ object HotItems {
     val aggStream: DataStream[ItemViewCount] = dataStream.filter(_.timestamp == "pv")
       .keyBy("itemId")
       .timeWindow(Time.hours(1), Time.minutes(5))
+      .allowedLateness(Time.minutes(1))
+      .sideOutputLateData(new OutputTag[UserBehavior]("late"))
       .aggregate(new CountAgg, new ItemViewCountWindowResult)
 
     val resultStream = aggStream
