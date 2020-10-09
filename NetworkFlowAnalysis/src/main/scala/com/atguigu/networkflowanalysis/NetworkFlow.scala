@@ -3,7 +3,7 @@ package com.atguigu.networkflowanalysis
 import java.text.SimpleDateFormat
 
 import org.apache.flink.api.common.functions.AggregateFunction
-import org.apache.flink.api.common.state.{ListState, ListStateDescriptor, MapStateDescriptor}
+import org.apache.flink.api.common.state.MapStateDescriptor
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction
@@ -100,6 +100,7 @@ class TopNHostPages(n: Int) extends KeyedProcessFunction[Long, PageViewCount, St
 
   override def onTimer(timestamp: Long, ctx: KeyedProcessFunction[Long, PageViewCount, String]#OnTimerContext, out: Collector[String]): Unit = {
 
+    //以窗口时间为基准，通过判断偏移量来确定执行哪个定时器功能
     if (ctx.getCurrentKey + 60000L == timestamp) {
       pageViewCountMapState.clear()
       return
