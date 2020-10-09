@@ -3,7 +3,7 @@ package com.atguigu.networkflowanalysis
 import org.apache.flink.api.common.functions.{AggregateFunction, MapFunction}
 import org.apache.flink.api.common.state.ValueStateDescriptor
 import org.apache.flink.streaming.api.TimeCharacteristic
-import org.apache.flink.streaming.api.functions.ProcessFunction
+import org.apache.flink.streaming.api.functions.{KeyedProcessFunction, ProcessFunction}
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.scala.function.WindowFunction
 import org.apache.flink.streaming.api.windowing.time.Time
@@ -48,6 +48,13 @@ object PageView {
       })
       .timeWindow(Time.hours(1), Time.minutes(5))
       .aggregate(new ConutAggFunction, new CountPvWindowFunction)
+     /*
+      没来一个加一次
+     .keyBy(_.timestamp)
+      .sum("cnt")
+      */
+      //如果不keyBy的话，没来一个值都会重新计算一下
+      .keyBy(_.timestamp)
       .process(new ProcessPvAggFunction)
 
     pvStream.print("pv")
@@ -76,17 +83,17 @@ class CountPvWindowFunction extends WindowFunction[Long, PvResult, Int, TimeWind
 }
 
 
-class ProcessPvAggFunction extends ProcessFunction[PvResult, Long] {
+class ProcessPvAggFunction extends KeyedProcessFunction[Long, PvResult, Long] {
 
   lazy val count = getRuntimeContext.getState(new ValueStateDescriptor[Long]("cnt", classOf[Long]))
 
-  override def processElement(value: PvResult, ctx: ProcessFunction[PvResult, Long]#Context, out: Collector[Long]): Unit = {
+  override def processElement(value: PvResult, ctx: KeyedProcessFunction[Long, PvResult, Long]#Context, collector: Collector[Long]): Unit = {
     count.update(count.value() + value.cnt)
     ctx.timerService().registerEventTimeTimer(value.timestamp + 1)
   }
 
-
-  override def onTimer(timestamp: Long, ctx: ProcessFunction[PvResult, Long]#OnTimerContext, out: Collector[Long]): Unit = {
-    count.clear()
+  override def onTimer(timestamp: Long, ctx: KeyedProcessFunction[Long, PvResult, Long]#OnTimerContext, out: Collector[Long]): Unit = {
+    out.collect(count.value())
+    this.count.clear()
   }
 }
