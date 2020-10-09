@@ -29,7 +29,7 @@ object PageView {
 
   def main(args: Array[String]): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
-    env.setParallelism(1)
+    //env.setParallelism(1)
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
 
     val resource = getClass.getResource("UserBehavior.csv")
