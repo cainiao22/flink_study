@@ -33,15 +33,14 @@ object UniqueVisit {
 }
 
 
-class UvCountResultWithBloom extends ProcessWindowFunction[UserBehavior, UvCount, TimeWindow] {
-
-  override def apply(window: TimeWindow, input: Iterable[UserBehavior], out: Collector[UvCount]): Unit = {
+class UvCountResultWithBloom extends ProcessWindowFunction[(String, Long), UvCount, String, TimeWindow] {
+  override def process(key: String, context: Context, input: Iterable[(String, Long)], out: Collector[UvCount]): Unit = {
     //精确实现
     val set = new mutable.HashSet[Long]
     input.iterator.foreach(
-      user => set.add(user.userId)
+      user => set.add(user._2)
     )
 
-    out.collect(UvCount(window.getEnd, set.size))
+    out.collect(UvCount(context.window.getEnd, set.size))
   }
 }
