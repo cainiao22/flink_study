@@ -2,9 +2,9 @@ package com.atguigu.orderpaydetect
 
 import java.util
 
-import org.apache.flink.cep.{PatternSelectFunction, PatternTimeoutFunction}
-import org.apache.flink.cep.scala.{CEP, PatternStream}
+import org.apache.flink.cep.scala.CEP
 import org.apache.flink.cep.scala.pattern.Pattern
+import org.apache.flink.cep.{PatternSelectFunction, PatternTimeoutFunction}
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.time.Time
@@ -26,7 +26,7 @@ object OrderTimeoutMain {
         val arr = line.split(",")
         OrderPayEvent(arr(0).toLong, arr(1), arr(2).toLong, arr(3).toLong)
       }).assignAscendingTimestamps(_.timestamp)
-      .keyBy(_.orderId)
+      .keyBy(_.txId)
 
     val orderPattern = Pattern.begin[OrderPayEvent]("create")
       .where(_.event == "create")
